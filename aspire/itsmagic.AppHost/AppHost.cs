@@ -1,6 +1,6 @@
 var builder = DistributedApplication.CreateBuilder(args);
 
-var enablePgAdmin = false;
+var enablePgAdmin = true;
 
 var postgres = builder.AddPostgres("postgres")
     .WithImageTag("17")
@@ -26,7 +26,7 @@ var pyApp = builder
     .AddPythonApp("itsmagicbe", "../../backend", "api.py")
     .WaitFor(postgresdb)
     .WithReference(postgresdb)
-    .WithVirtualEnvironment("venv", true)
+    .WithVirtualEnvironment(".venv", true)
     .WithPip(true)
     .WithEnvironment("DbConn", postgresdb)
     .WithHttpEndpoint(env: "PORT", port: 8000)
