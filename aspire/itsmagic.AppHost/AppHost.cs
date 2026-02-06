@@ -6,6 +6,8 @@ var postgres = builder.AddPostgres("postgres")
     .WithImageTag("17")
     .WithContainerName("itsmagic-postgres")
     .WithLifetime(ContainerLifetime.Persistent)
+    .WithHostPort(5444)
+    .WithExternalHttpEndpoints()
     .WithDataVolume(isReadOnly: false);
 
 if (enablePgAdmin)
