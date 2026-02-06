@@ -1,0 +1,65 @@
+* {
+  box-sizing: border-box;
+}
+
+:host {
+  display: block;
+  min-height: 100vh;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  background: #f5f7fb;
+  color: #1d2330;
+}
+
+.app-shell {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.25rem 2.5rem;
+  background: linear-gradient(120deg, #0f172a 0%, #1e293b 100%);
+  color: #f8fafc;
+  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.25);
+}
+
+.brand {
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.app-nav {
+  display: flex;
+  gap: 1rem;
+}
+
+.app-nav a {
+  color: #e2e8f0;
+  text-decoration: none;
+  font-weight: 600;
+  padding: 0.5rem 0.9rem;
+  border-radius: 999px;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.app-nav a.active,
+.app-nav a:hover {
+  background: #fbbf24;
+  color: #0f172a;
+}
+
+.app-main {
+  padding: 2.5rem;
+}
+
+@media (max-width: 720px) {
+  .app-shell {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 1.5rem;
+  }
+
+  .app-main {
+    padding: 1.5rem;
+  }
+}

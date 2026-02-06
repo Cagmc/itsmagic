@@ -37,6 +37,7 @@ var pyApp = builder
 var jsApp = builder
     .AddJavaScriptApp("itsmagicfe", "../../frontend/itsmagicfe", "start")
     .WaitFor(pyApp)
+    .WithReference(pyApp)
     .WithNpm(true)
     .WithHttpEndpoint(env: "PORT", port: 4200)
     .WithExternalHttpEndpoints();

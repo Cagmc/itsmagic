@@ -1,6 +1,7 @@
 import logging
 
 from fastapi import Depends, FastAPI, HTTPException, Query, status
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
 from scalar_fastapi import get_scalar_api_reference
 from sqlalchemy.orm import Session
@@ -16,6 +17,13 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 app = FastAPI()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:4200"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 @app.on_event("startup")
