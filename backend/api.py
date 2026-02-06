@@ -28,7 +28,7 @@ if __name__ == "__main__":
     import uvicorn
     import os
 
-    connectionString = os.environ.get("postgresdb", "--")
+    connectionString = os.environ.get("DbConn", "--")
     print(f">>> Connecting to database: {connectionString}")
 
     port = int(os.environ.get("PORT", "8000"))

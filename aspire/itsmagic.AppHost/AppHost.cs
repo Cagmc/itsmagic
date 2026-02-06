@@ -28,6 +28,7 @@ var pyApp = builder
     .WithReference(postgresdb)
     .WithVirtualEnvironment("venv", true)
     .WithPip(true)
+    .WithEnvironment("DbConn", postgresdb)
     .WithHttpEndpoint(env: "PORT", port: 8000)
     .WithExternalHttpEndpoints();
 
