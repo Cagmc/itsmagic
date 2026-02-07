@@ -52,13 +52,16 @@ await Expect(nameValue).ToHaveTextAsync(updatedName);
 await Expect(emailValue).ToHaveTextAsync(updatedEmail);
 
 Console.WriteLine("Deleting client...");
-var dialogTcs = new TaskCompletionSource<IDialog>();
-void DialogHandler(object? _, IDialog dialog) => dialogTcs.TrySetResult(dialog);
-page.Dialog += DialogHandler;
+EventHandler<IDialog> handler = null!;
+handler = async (_, dialog) =>
+{
+    Console.WriteLine($"Handled: {dialog.Message}");
+    await dialog.AcceptAsync();
+    
+    page.Dialog -= handler;
+};
+page.Dialog += handler;
 await page.GetByRole(AriaRole.Button, new() { Name = "Delete Client" }).ClickAsync();
-var dialog = await dialogTcs.Task;
-await dialog.AcceptAsync();
-page.Dialog -= DialogHandler;
 
 await page.GetByRole(AriaRole.Heading, new() { Name = "Clients" }).WaitForAsync();
 var deletedRow = page.Locator("tbody tr").Filter(new LocatorFilterOptions { HasTextString = updatedName });
