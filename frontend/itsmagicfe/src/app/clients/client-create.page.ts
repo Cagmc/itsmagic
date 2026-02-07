@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
@@ -40,7 +40,7 @@ import { ClientService } from '../services/client.service';
       }
 
       <div class="actions">
-        <button type="submit" [disabled]="form.invalid || loading">Create Client</button>
+        <button type="submit" [disabled]="form.invalid || loading()">Create Client</button>
       </div>
       @if(error){
         <div class="status error">{{ error }}</div>
@@ -149,7 +149,7 @@ import { ClientService } from '../services/client.service';
   ]
 })
 export class ClientCreatePage {
-  loading = false;
+  loading = signal(false);
   error: string | null = null;
   private readonly fb = inject(FormBuilder);
   private readonly clientService = inject(ClientService);
@@ -161,18 +161,18 @@ export class ClientCreatePage {
   });
 
   submit(): void {
-    if (this.form.invalid || this.loading) {
+    if (this.form.invalid || this.loading()) {
       return;
     }
-    this.loading = true;
+    this.loading.set(true);
     this.error = null;
     this.clientService.create(this.form.getRawValue()).subscribe({
       next: () => {
-        this.loading = false;
+        this.loading.set(false);
         this.router.navigate(['/clients']);
       },
       error: () => {
-        this.loading = false;
+        this.loading.set(false);
         this.error = 'Unable to create the client.';
       }
     });
