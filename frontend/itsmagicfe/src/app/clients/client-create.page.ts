@@ -23,22 +23,28 @@ import { ClientService } from '../services/client.service';
         Name
         <input type="text" formControlName="name" placeholder="Client name" />
       </label>
-      <div class="error" *ngIf="form.controls.name.touched && form.controls.name.invalid">
-        Name is required.
-      </div>
+      @if(form.controls.name.touched && form.controls.name.invalid){
+        <div class="error">
+          Name is required.
+        </div>
+      }
 
       <label>
         Email
         <input type="email" formControlName="email" placeholder="client@email.com" />
       </label>
-      <div class="error" *ngIf="form.controls.email.touched && form.controls.email.invalid">
-        Enter a valid email.
-      </div>
+      @if(form.controls.email.touched && form.controls.email.invalid){
+        <div class="error">
+          Enter a valid email.
+        </div>
+      }
 
       <div class="actions">
         <button type="submit" [disabled]="form.invalid || loading">Create Client</button>
       </div>
-      <div class="status error" *ngIf="error">{{ error }}</div>
+      @if(error){
+        <div class="status error">{{ error }}</div>
+      }
     </form>
   `,
   styles: [

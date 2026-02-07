@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -14,37 +14,51 @@ import { ClientViewModel } from '../models/client';
       <div>
         <p class="eyebrow">Client Profile</p>
         <h1>Edit Client</h1>
-        <p class="subtle" *ngIf="client">Update details for {{ client.name }}.</p>
+        @if(client){
+            <p class="subtle">Update details for {{ client.name }}.</p>
+        }
       </div>
       <a class="ghost" routerLink="/clients">Back to Clients</a>
     </section>
 
-    <div class="card" *ngIf="loading">Loading client...</div>
-    <div class="card error" *ngIf="error">{{ error }}</div>
+    @if(loading()){
+      <div class="card">Loading client...</div>
+    }
+    @if(error){
+      <div class="card error">{{ error }}</div>
+    }
 
-    <form class="card" *ngIf="!loading && !error" [formGroup]="form" (ngSubmit)="submit()">
-      <label>
-        Name
-        <input type="text" formControlName="name" />
-      </label>
-      <div class="error" *ngIf="form.controls.name.touched && form.controls.name.invalid">
-        Name is required.
-      </div>
+    @if(!loading() && !error){
+      <form class="card" [formGroup]="form" (ngSubmit)="submit()">
+        <label>
+          Name
+          <input type="text" formControlName="name" />
+        </label>
+        @if(form.controls.name.touched && form.controls.name.invalid){
+          <div class="error">
+            Name is required.
+          </div>
+        }
 
-      <label>
-        Email
-        <input type="email" formControlName="email" />
-      </label>
-      <div class="error" *ngIf="form.controls.email.touched && form.controls.email.invalid">
-        Enter a valid email.
-      </div>
+        <label>
+          Email
+          <input type="email" formControlName="email" />
+        </label>
+        @if(form.controls.email.touched && form.controls.email.invalid){
+          <div class="error">
+            Enter a valid email.
+          </div>
+        }
 
-      <div class="actions">
-        <button type="submit" [disabled]="form.invalid || saving">Save Changes</button>
-        <a class="ghost" routerLink="/clients/{{ clientId }}">Cancel</a>
-      </div>
-      <div class="status error" *ngIf="saveError">{{ saveError }}</div>
-    </form>
+        <div class="actions">
+          <button type="submit" [disabled]="form.invalid || saving()">Save Changes</button>
+          <a class="ghost" routerLink="/clients/{{ clientId }}">Cancel</a>
+        </div>
+        @if(saveError){
+          <div class="status error">{{ saveError }}</div>
+        }
+      </form>
+    }
   `,
   styles: [
     `
@@ -151,8 +165,8 @@ import { ClientViewModel } from '../models/client';
 export class ClientEditPage implements OnInit {
   client: ClientViewModel | null = null;
   clientId = 0;
-  loading = true;
-  saving = false;
+  loading = signal(true);
+  saving = signal(false);
   error: string | null = null;
   saveError: string | null = null;
   private readonly fb = inject(FormBuilder);
@@ -170,7 +184,7 @@ export class ClientEditPage implements OnInit {
     const parsedId = idParam ? Number(idParam) : NaN;
     if (!Number.isFinite(parsedId)) {
       this.error = 'Invalid client id.';
-      this.loading = false;
+      this.loading.set(false);
       return;
     }
     this.clientId = parsedId;
@@ -181,28 +195,28 @@ export class ClientEditPage implements OnInit {
           name: client.name,
           email: client.email
         });
-        this.loading = false;
+        this.loading.set(false);
       },
       error: () => {
         this.error = 'Unable to load the client.';
-        this.loading = false;
+        this.loading.set(false);
       }
     });
   }
 
   submit(): void {
-    if (this.form.invalid || this.saving) {
+    if (this.form.invalid || this.saving()) {
       return;
     }
-    this.saving = true;
+    this.saving.set(true);
     this.saveError = null;
     this.clientService.update(this.clientId, this.form.getRawValue()).subscribe({
       next: () => {
-        this.saving = false;
+        this.saving.set(false);
         this.router.navigate(['/clients', this.clientId]);
       },
       error: () => {
-        this.saving = false;
+        this.saving.set(false);
         this.saveError = 'Failed to update the client.';
       }
     });

@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import {Component, OnInit, signal} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ClientService } from '../services/client.service';
@@ -18,28 +18,34 @@ import { ClientViewModel } from '../models/client';
       <a class="ghost" routerLink="/clients">Back to Clients</a>
     </section>
 
-    <div class="card" *ngIf="loading">Loading client...</div>
-    <div class="card error" *ngIf="error">{{ error }}</div>
+    @if (loading()) {
+      <div class="card">Loading client...</div>
+    }
+    @if (error) {
+      <div class="card error">{{ error }}</div>
+    }
 
-    <div class="card" *ngIf="client">
-      <div class="row">
-        <span>Client ID</span>
-        <strong>#{{ client.id }}</strong>
-      </div>
-      <div class="row">
-        <span>Name</span>
-        <strong>{{ client.name }}</strong>
-      </div>
-      <div class="row">
-        <span>Email</span>
-        <strong>{{ client.email }}</strong>
-      </div>
+    @if(client){
+      <div class="card">
+        <div class="row">
+          <span>Client ID</span>
+          <strong>#{{ client.id }}</strong>
+        </div>
+        <div class="row">
+          <span>Name</span>
+          <strong>{{ client.name }}</strong>
+        </div>
+        <div class="row">
+          <span>Email</span>
+          <strong>{{ client.email }}</strong>
+        </div>
 
-      <div class="actions">
-        <a class="primary" routerLink="/clients/{{ client.id }}/edit">Edit Client</a>
-        <button type="button" (click)="deleteClient()">Delete Client</button>
+        <div class="actions">
+          <a class="primary" routerLink="/clients/{{ client.id }}/edit">Edit Client</a>
+          <button type="button" (click)="deleteClient()">Delete Client</button>
+        </div>
       </div>
-    </div>
+    }
   `,
   styles: [
     `
@@ -142,7 +148,7 @@ import { ClientViewModel } from '../models/client';
 export class ClientDetailPage implements OnInit {
   client: ClientViewModel | null = null;
   clientId = 0;
-  loading = true;
+  loading = signal(true);
   error: string | null = null;
 
   constructor(
@@ -156,18 +162,18 @@ export class ClientDetailPage implements OnInit {
     const parsedId = idParam ? Number(idParam) : NaN;
     if (!Number.isFinite(parsedId)) {
       this.error = 'Invalid client id.';
-      this.loading = false;
+      this.loading.set(false);
       return;
     }
     this.clientId = parsedId;
     this.clientService.getById(this.clientId).subscribe({
       next: (client) => {
         this.client = client;
-        this.loading = false;
+        this.loading.set(false);
       },
       error: () => {
         this.error = 'Unable to load the client.';
-        this.loading = false;
+        this.loading.set(false);
       }
     });
   }

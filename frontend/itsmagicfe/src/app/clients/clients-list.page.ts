@@ -1,12 +1,12 @@
-import { Component, OnInit } from '@angular/core';
+import {Component, OnDestroy, OnInit, signal} from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { ClientService } from '../services/client.service';
 import { ClientViewModel } from '../models/client';
+import { Subject, takeUntil } from 'rxjs';
 
 @Component({
   selector: 'app-clients-list',
-  standalone: true,
   imports: [CommonModule, RouterLink],
   template: `
     <section class="page-header">
@@ -19,35 +19,49 @@ import { ClientViewModel } from '../models/client';
     </section>
 
     <div class="card">
-      <div class="status" *ngIf="loading">Loading clients...</div>
-      <div class="status error" *ngIf="error">{{ error }}</div>
+      @if(loading())
+      {
+        <div class="status">Loading clients...</div>
+      }
+      @if(error)
+      {
+        <div class="status error">{{ error }}</div>
+      }
 
-      <table *ngIf="!loading && clients.length > 0">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Name</th>
-            <th>Email</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let client of clients">
-            <td>#{{ client.id }}</td>
-            <td>{{ client.name }}</td>
-            <td>{{ client.email }}</td>
-            <td class="actions">
-              <a routerLink="/clients/{{ client.id }}">View</a>
-              <a routerLink="/clients/{{ client.id }}/edit">Edit</a>
-              <button type="button" (click)="deleteClient(client)">Delete</button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+      @if(!loading() && clients.length > 0)
+      {
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Name</th>
+              <th>Email</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+          @for(client of clients; track client.id) {
+            <tr>
+              <td>#{{ client.id }}</td>
+              <td>{{ client.name }}</td>
+              <td>{{ client.email }}</td>
+              <td class="actions">
+                <a routerLink="/clients/{{ client.id }}">View</a>
+                <a routerLink="/clients/{{ client.id }}/edit">Edit</a>
+                <button type="button" (click)="deleteClient(client)">Delete</button>
+              </td>
+            </tr>
+          }
+          </tbody>
+        </table>
+      }
 
-      <div class="empty" *ngIf="!loading && clients.length === 0">
-        No clients found yet. Add the first one.
-      </div>
+      @if(!loading() && clients.length === 0)
+      {
+        <div class="empty">
+          No clients found yet. Add the first one.
+        </div>
+      }
     </div>
   `,
   styles: [
@@ -160,30 +174,41 @@ import { ClientViewModel } from '../models/client';
     `
   ]
 })
-export class ClientsListPage implements OnInit {
+export class ClientsListPage implements OnInit, OnDestroy {
   clients: ClientViewModel[] = [];
-  loading = false;
+  loading = signal(false);
   error: string | null = null;
+  private readonly destroy$ = new Subject<void>();
 
-  constructor(private readonly clientService: ClientService) {}
+  constructor(
+    private readonly clientService: ClientService,
+    private readonly router: Router
+  ) {}
 
   ngOnInit(): void {
     this.loadClients();
   }
 
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
   loadClients(): void {
-    this.loading = true;
+    this.loading.set(true);
     this.error = null;
-    this.clientService.list().subscribe({
-      next: (clients) => {
-        this.clients = clients;
-        this.loading = false;
-      },
-      error: () => {
-        this.error = 'Unable to load clients right now.';
-        this.loading = false;
-      }
-    });
+    this.clientService.list()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (clients) => {
+          this.clients = clients;
+          this.loading.set(false);
+        },
+        error: () => {
+          this.error = 'Unable to load clients right now.';
+          this.loading.set(false);
+        }
+      });
   }
 
   deleteClient(client: ClientViewModel): void {
@@ -191,11 +216,13 @@ export class ClientsListPage implements OnInit {
     if (!confirmed) {
       return;
     }
-    this.clientService.delete(client.id).subscribe({
-      next: () => this.loadClients(),
-      error: () => {
-        this.error = 'Failed to delete the client.';
-      }
-    });
+    this.clientService.delete(client.id)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => this.loadClients(),
+        error: () => {
+          this.error = 'Failed to delete the client.';
+        }
+      });
   }
 }
