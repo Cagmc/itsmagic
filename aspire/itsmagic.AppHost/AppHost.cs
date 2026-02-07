@@ -1,10 +1,15 @@
+using Microsoft.Extensions.Configuration;
+
 var builder = DistributedApplication.CreateBuilder(args);
 
-var enablePgAdmin = true;
+var enablePgAdmin = builder.Configuration.GetValue<bool>("EnablePgAdmin", true);
+var appName = builder.Configuration.GetValue<string>("AppName", "itsmagic");
+var installNpm = builder.Configuration.GetValue<bool>("InstallNpm", true);
+var installPip = builder.Configuration.GetValue<bool>("InstallPip", true);
 
 var postgres = builder.AddPostgres("postgres")
     .WithImageTag("17")
-    .WithContainerName("itsmagic-postgres")
+    .WithContainerName($"{appName}-postgres")
     .WithLifetime(ContainerLifetime.Persistent)
     .WithHostPort(5444)
     .WithExternalHttpEndpoints()
@@ -19,26 +24,27 @@ if (enablePgAdmin)
             pgAdmin.WithLifetime(ContainerLifetime.Persistent);
             pgAdmin.WithHostPort(5050);
             pgAdmin.WithExternalHttpEndpoints();
-        }, "itsmagic-pgadmin");
+        }, $"{appName}-pgadmin");
 }
 
 var postgresdb = postgres.AddDatabase("postgresdb", "itsmagic");
 
 var pyApp = builder
-    .AddPythonApp("itsmagicbe", "../../backend", "api.py")
+    .AddPythonApp($"{appName}be", "../../backend", "api.py")
     .WaitFor(postgresdb)
     .WithReference(postgresdb)
-    .WithVirtualEnvironment(".venv", true)
-    .WithPip(true)
+    .WithVirtualEnvironment("venv", true)
+    .WithPip(installPip)
     .WithEnvironment("DbConn", postgresdb)
     .WithHttpEndpoint(env: "PORT", port: 8000)
     .WithExternalHttpEndpoints();
 
 var jsApp = builder
-    .AddJavaScriptApp("itsmagicfe", "../../frontend/itsmagicfe", "start")
+    .AddJavaScriptApp($"{appName}fe", "../../frontend/itsmagicfe", "start")
     .WaitFor(pyApp)
     .WithReference(pyApp)
-    .WithNpm(true)
+    .WithNpm(installNpm)
+    .WithEnvironment("APP_NAME", appName)
     .WithHttpEndpoint(env: "PORT", port: 4200)
     .WithExternalHttpEndpoints();
 

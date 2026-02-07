@@ -1,6 +1,8 @@
+const appName = process.env["APP_NAME"] || "itsmagic";
+
 const target =
-  process.env["services__itsmagicbe__https__0"] ||
-  process.env["services__itsmagicbe__http__0"];
+  process.env[`services__${appName}be__https__0`] ||
+  process.env[`services__${appName}be__http__0`];
 
 module.exports = {
   "/api": {
