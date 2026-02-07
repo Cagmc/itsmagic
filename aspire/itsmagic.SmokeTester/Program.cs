@@ -1,7 +1,14 @@
+using Microsoft.Extensions.Configuration;
 using Microsoft.Playwright;
 using static Microsoft.Playwright.Assertions;
 
-const string url = "http://localhost:4200/";
+IConfiguration configuration = new ConfigurationBuilder()
+    .AddJsonFile("appsettings.json")
+    .Build();
+
+var url = configuration.GetValue<string>("Url", "http://localhost:4200");
+var headless = configuration.GetValue<bool>("Headless", true);
+var slowMo = configuration.GetValue<int>("SlowMo", 0);
 
 Console.WriteLine("Testing begins...");
 
@@ -14,9 +21,10 @@ var updatedEmail = $"smoke.updated.{timestamp}@example.com";
 var playwright = await Playwright.CreateAsync();
 await using var browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions
 {
-    Headless = false,
-    SlowMo = 1000
+    Headless = headless,
+    SlowMo = slowMo
 });
+
 var context = await browser.NewContextAsync();
 var page = await context.NewPageAsync();
 
