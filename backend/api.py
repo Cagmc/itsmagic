@@ -1,5 +1,7 @@
 import logging
 
+from contextlib import asynccontextmanager
+
 from fastapi import Depends, FastAPI, HTTPException, Query, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
@@ -16,7 +18,15 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-app = FastAPI()
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    engine = init_engine()
+    Base.metadata.create_all(bind=engine)
+    logger.info("Database initialized and tables ensured")
+    yield
+    logger.info("Shutting down database connection pool")
+
+app = FastAPI(lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:4200"],
@@ -24,13 +34,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-
-@app.on_event("startup")
-def on_startup():
-    engine = init_engine()
-    Base.metadata.create_all(bind=engine)
-    logger.info("Database initialized and tables ensured")
 
 
 def get_client_service(db: Session = Depends(get_db)):
